@@ -1,0 +1,36 @@
+version: '3.6'
+# indentations matter in 'yml' files
+services:
+
+  # Backend API
+  smart-brain-api:
+    container_name: backend
+    # image: node:8.16.2
+    build: ./
+    # builds from source using Dockerfile
+    command: npm start
+    working_dir: /usr/src/smart-brain-api
+    # proper directory (package.json)
+    environment:
+      POSTGRES_URI: postgres://victor:secret@postgres:5432/smart-brain-docker
+    # links API to postgres DB (new Docker update does not require 'link')
+    # links:
+    #   - postgres
+    ports:
+      - "3000:3000"
+    # maps containers internal port to the host
+    volumes:
+      - ./:/usr/src/smart-brain-api
+    # 'volumes' allows access into the file system to update Docker container based on local changes
+
+  # Postgres
+  postgres:
+    environment:
+      POSTGRES_USER: victor
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: smart-brain-docker
+      POSTGRES_HOST: postgres
+  # builds Dockerfile inside of 'postgres' folder
+    build: ./postgres
+    ports:
+      - "5432:5432"
