@@ -13,9 +13,11 @@ services:
     # proper directory (package.json)
     environment:
       POSTGRES_URI: postgres://victor:secret@postgres:5432/smart-brain-docker
+      REDIS_URI: redis://redis:6379
     # links API to postgres DB (new Docker update does not require 'link')
     # links:
     #   - postgres
+    #   - redis
     ports:
       - "3000:3000"
     # maps containers internal port to the host
@@ -34,3 +36,9 @@ services:
     build: ./postgres
     ports:
       - "5432:5432"
+
+  # Redis
+  redis:
+    image: redis
+    ports:
+      - "6379:6379"
