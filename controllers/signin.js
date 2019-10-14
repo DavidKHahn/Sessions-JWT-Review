@@ -7,7 +7,7 @@ const redisClient = redis.createClient(process.env.REDIS_URI);
 const handleSignin = (db, bcrypt, req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
-    // return res.status(400).json('incorrect form submission');
+// return res.status(400).json('incorrect form submission');
     return Promise.reject('incorrect form submission');
   }
   return db.select('email', 'hash').from('login')
@@ -30,8 +30,16 @@ const handleSignin = (db, bcrypt, req, res) => {
     .catch(Promise.reject('Wrong credentials'))
 }
 
-const getAuthTokenId = () => {
-  console.log('Auth okay');
+const getAuthTokenId = (req, res) => {
+  const { authorization } = req.headers;
+  return redisClient.get(authorization, (err, reply) => {
+    if (err || !reply ) {
+// returns error if no reply or error
+      return res.status(400).json('Unauthorized');
+    }
+// returns string of 'id'
+      return res.json({ id: reply })
+  })
 }
 
 const signToken = (email) => {
@@ -40,6 +48,7 @@ const signToken = (email) => {
 }
 
 const setToken = (key, value) => {
+// sets token in redis and returns a promise
   return Promise.resolve(redisClient.set(key, value))
 }
 
@@ -56,12 +65,15 @@ const createSessions = (user) => {
 
 const signinAuthentication = (db, bcrypt) => (req, res) => {
   const { authorization } = req.headers;
-  return authorization ?
-    getAuthTokenId() :
+// checks if user already has authorization
+  return authorization ? getAuthTokenId(req, res) :
+// direct user to sign if auth does not exist
     handleSignin(db, bcrypt, req, res)
       .then(data => {
+// if id, email exists then stores information in redis server otherwise reject with error
         return data.id && data.email ? createSessions(data) : Promise.reject(data)
       })
+// returns session information
       .then(session => res.json(session))
       .catch(err => res.status(400).json(err))
 }
