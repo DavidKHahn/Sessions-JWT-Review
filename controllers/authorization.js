@@ -1,4 +1,4 @@
-const redisClient = require('./signin').redisClient();
+const redisClient = require('./signin').redisClient;
 
 const requireAuth = (req, res, next) => {
 // checks if there is auth
